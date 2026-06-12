@@ -1,0 +1,11 @@
+{
+  "name": "aircoin",
+  "version": "1.0.0",
+  "description": "Plateforme de location de logements Air'Coin",
+  "scripts": {
+    "dev:client": "cd client && npm run dev",
+    "dev:server": "cd server && npm run dev",
+    "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\""
+  },
+  "private": true
+}
