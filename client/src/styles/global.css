@@ -1,0 +1,316 @@
+/* =============================================================
+   Air'Coin — Global Styles (Tailwind CSS v4)
+   Emplacement : client/src/styles/global.css
+
+   Import dans main.jsx :
+     import './styles/global.css'
+     (tokens.css n'est plus importé séparément, voir note en bas)
+
+   ⚠️ IMPORTANT — Tailwind v4 :
+   tailwind.config.js N'EST PLUS LU automatiquement par le plugin
+   Vite (@tailwindcss/vite). La configuration se fait maintenant
+   en CSS, directement ici, via la directive @theme.
+   C'est pourquoi tailwind.config.js a été supprimé du projet —
+   toutes les couleurs/tailles personnalisées vivent désormais
+   dans le bloc @theme ci-dessous et génèrent automatiquement
+   les classes Tailwind correspondantes (bg-minuit, text-terrecuite...).
+   ============================================================= */
+
+/* ── Import Tailwind (obligatoire, doit être en premier) ──────── */
+@import "tailwindcss";
+
+/* ── Import des polices Google Fonts ─────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* =============================================================
+   THEME — Air'Coin Design Tokens
+   Chaque variable --color-xxx / --font-xxx / --shadow-xxx ci-dessous
+   génère automatiquement les classes Tailwind utilisées dans les
+   composants : bg-minuit, text-terrecuite, shadow-cta, font-display...
+   ============================================================= */
+@theme {
+
+  /* ── Couleurs (règle 60-30-10) ────────────────────────────── */
+  --color-white:       #FFFFFF;
+  --color-brume:       #EBF1F6;
+  --color-brume-dark:  #C8D8E8;
+
+  --color-minuit:      #1A2B4C;
+  --color-charbon:     #2D3142;
+
+  --color-terrecuite:        #D47A5B;
+  --color-terrecuite-hover:  #C0654A;
+  --color-terrecuite-light:  #D47A5B1F; /* ~12% opacité */
+
+  --color-gris:   #8A94A8;
+  --color-border: #D8E2EC;
+  --color-star:   #E8A030;
+
+  --color-success: #2E7D5E;
+  --color-error:   #C0392B;
+
+  /* ── Typographie ──────────────────────────────────────────── */
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-body:    "Inter", "Segoe UI", sans-serif;
+
+  --text-hero: 3.25rem;
+
+  /* ── Ombres ───────────────────────────────────────────────── */
+  --shadow-card:
+    0 4px 20px -4px rgba(26, 43, 76, 0.10),
+    0 1px 4px  -1px rgba(26, 43, 76, 0.06);
+
+  --shadow-card-hover:
+    0 12px 32px -6px rgba(26, 43, 76, 0.16),
+    0 2px  8px  -2px rgba(26, 43, 76, 0.08);
+
+  --shadow-nav:
+    0 2px 12px 0 rgba(0, 0, 0, 0.07);
+
+  --shadow-search:
+    0 20px 50px -8px rgba(0, 0, 0, 0.22);
+
+  --shadow-cta:
+    0 10px 28px -4px rgba(212, 122, 91, 0.45);
+
+  --shadow-booking:
+    0 8px 32px -4px rgba(0, 0, 0, 0.14);
+}
+
+/* ── Reset moderne (box-sizing + marges) ─────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Base HTML ────────────────────────────────────────────────── */
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  background-color: var(--color-white);
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Couleur de texte par défaut — UNIQUEMENT ici, pas sur les titres
+   ni les paragraphes, pour ne jamais entrer en conflit avec une
+   classe Tailwind text-white posée sur un titre/paragraphe précis. */
+body {
+  color: var(--color-charbon);
+}
+
+/* ── Typographie ──────────────────────────────────────────────── */
+/* IMPORTANT : aucune couleur ici. La couleur des titres doit
+   TOUJOURS venir d'une classe Tailwind dans le JSX (text-minuit,
+   text-white...). Une couleur fixée ici écraserait les classes
+   text-white utilisées sur fond sombre (hero, footer, CTA), les
+   rendant illisibles puisqu'elle prendrait le dessus en cascade. */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-body);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+h1 { font-size: var(--text-hero); }
+h2 { font-size: 2.25rem; }
+h3 { font-size: 1.875rem; }
+h4 { font-size: 1.375rem; }
+h5 { font-size: 1.125rem; }
+h6 { font-size: 1rem; }
+
+p {
+  line-height: 1.6;
+}
+
+/* ── Liens ────────────────────────────────────────────────────── */
+a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+
+a:hover {
+  color: var(--color-terrecuite);
+}
+
+/* ── Images ───────────────────────────────────────────────────── */
+img,
+video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ── Listes ───────────────────────────────────────────────────── */
+ul, ol {
+  list-style: none;
+}
+
+/* ── Formulaires ──────────────────────────────────────────────── */
+input,
+textarea,
+select,
+button {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  border: none;
+  background: none;
+  outline: none;
+}
+
+/* Pas de width:100% générique ici — la largeur se gère au cas
+   par cas avec la classe Tailwind w-full directement dans le JSX. */
+input,
+textarea,
+select {
+  color: var(--color-minuit);
+  line-height: 1.4;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-gris);
+  font-weight: 400;
+}
+
+/* ── Bouton de base ───────────────────────────────────────────── */
+button {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  line-height: 1.2;
+  transition: all 250ms ease;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ── Focus accessible ─────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--color-terrecuite);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ── Scrollbar (navigateurs Webkit) ──────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-brume);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gris);
+}
+
+/* ── Sélection de texte ───────────────────────────────────────── */
+::selection {
+  background-color: rgba(212, 122, 91, 0.2);
+  color: var(--color-minuit);
+}
+
+/* ── Layout utilitaires ───────────────────────────────────────── */
+.container {
+  width: 100%;
+  max-width: 1440px;
+  margin-inline: auto;
+  padding-inline: clamp(1.5rem, 5vw, 5rem);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── Sections ─────────────────────────────────────────────────── */
+.section {
+  padding-block: 5rem;
+}
+
+.section--brume {
+  background-color: var(--color-brume);
+}
+
+.section__header {
+  margin-bottom: 3rem;
+}
+
+.section__title {
+  font-size: 1.875rem;
+  color: var(--color-minuit);
+  margin-bottom: 0.5rem;
+}
+
+.section__subtitle {
+  font-size: 0.9375rem;
+  color: var(--color-gris);
+}
+
+/* ── Animations ───────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 400ms ease both;
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-brume)       0%,
+    var(--color-brume-dark) 50%,
+    var(--color-brume)      100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 8px;
+}
+
+/* ── Responsive motion ────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

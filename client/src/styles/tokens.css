@@ -1,0 +1,134 @@
+/* =============================================================
+   Air'Coin — Design Tokens
+   Emplacement : client/src/styles/tokens.css
+   
+   Règle 60-30-10 :
+   - 60% Base    : --color-white / --color-brume
+   - 30% Structure : --color-minuit / --color-charbon
+   - 10% Accent  : --color-terrecuite
+   ============================================================= */
+
+:root {
+
+  /* ── Couleurs principales ─────────────────────────────────── */
+  --color-white:       #FFFFFF;
+  --color-brume:       #EBF1F6;   /* Fonds secondaires, cartes, sections */
+
+  --color-minuit:      #1A2B4C;   /* Titres, nav, hiérarchie forte       */
+  --color-charbon:     #2D3142;   /* Texte courant, descriptions         */
+
+  --color-terrecuite:  #D47A5B;   /* CTAs, prix, favoris, accents        */
+  --color-terrecuite-hover: #C0654A;
+
+  /* ── Couleurs utilitaires ─────────────────────────────────── */
+  --color-gris:        #8A94A8;   /* Placeholders, métadonnées           */
+  --color-border:      #D8E2EC;   /* Séparateurs, contours               */
+  --color-brume-dark:  #C8D8E8;   /* Hover sur fonds brume               */
+
+  /* ── Statuts (hors DA, usage conditionnel) ────────────────── */
+  --color-success:     #2E7D5E;
+  --color-error:       #C0392B;
+  --color-star:        #E8A030;   /* Notes / étoiles                     */
+
+  /* ── Typographie ──────────────────────────────────────────── */
+  --font-display:      'Playfair Display', Georgia, serif;   /* Titres hero */
+  --font-body:         'Inter', 'Segoe UI', sans-serif;      /* Tout le reste */
+
+  --text-xs:    0.75rem;    /*  12px */
+  --text-sm:    0.8125rem;  /*  13px */
+  --text-base:  0.9375rem;  /*  15px */
+  --text-md:    1rem;       /*  16px */
+  --text-lg:    1.125rem;   /*  18px */
+  --text-xl:    1.375rem;   /*  22px */
+  --text-2xl:   1.875rem;   /*  30px */
+  --text-3xl:   2.25rem;    /*  36px */
+  --text-hero:  3.25rem;    /*  52px */
+
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+
+  --leading-tight:  1.15;
+  --leading-normal: 1.4;
+  --leading-relaxed: 1.6;
+  --leading-loose:   1.7;
+
+  --tracking-wide:  0.08em;
+  --tracking-wider: 0.12em;
+
+  /* ── Espacements ──────────────────────────────────────────── */
+  --space-1:   0.25rem;   /*  4px */
+  --space-2:   0.5rem;    /*  8px */
+  --space-3:   0.75rem;   /* 12px */
+  --space-4:   1rem;      /* 16px */
+  --space-5:   1.25rem;   /* 20px */
+  --space-6:   1.5rem;    /* 24px */
+  --space-8:   2rem;      /* 32px */
+  --space-10:  2.5rem;    /* 40px */
+  --space-12:  3rem;      /* 48px */
+  --space-16:  4rem;      /* 64px */
+  --space-20:  5rem;      /* 80px */
+  --space-24:  6rem;      /* 96px */
+
+  /* ── Conteneurs ───────────────────────────────────────────── */
+  --container-sm:   640px;
+  --container-md:   768px;
+  --container-lg:   1024px;
+  --container-xl:   1280px;
+  --container-2xl:  1440px;
+  --container-pad:  clamp(1.5rem, 5vw, 5rem);  /* padding horizontal responsive */
+
+  /* ── Border radius ────────────────────────────────────────── */
+  --radius-sm:   4px;
+  --radius-md:   8px;
+  --radius-lg:   12px;
+  --radius-xl:   16px;
+  --radius-full: 9999px;
+
+  /* ── Ombres ───────────────────────────────────────────────── */
+  --shadow-card:
+    0 4px 20px -4px rgba(26, 43, 76, 0.10),
+    0 1px 4px  -1px rgba(26, 43, 76, 0.06);
+
+  --shadow-card-hover:
+    0 12px 32px -6px rgba(26, 43, 76, 0.16),
+    0 2px  8px  -2px rgba(26, 43, 76, 0.08);
+
+  --shadow-nav:
+    0 2px 12px 0 rgba(0, 0, 0, 0.07);
+
+  --shadow-search:
+    0 20px 50px -8px rgba(0, 0, 0, 0.22);
+
+  --shadow-cta:
+    0 10px 28px -4px rgba(212, 122, 91, 0.45);
+
+  --shadow-booking:
+    0 8px 32px -4px rgba(0, 0, 0, 0.14);
+
+  /* ── Transitions ──────────────────────────────────────────── */
+  --transition-fast:   150ms ease;
+  --transition-base:   250ms ease;
+  --transition-slow:   400ms ease;
+
+  /* ── Z-index ──────────────────────────────────────────────── */
+  --z-base:     0;
+  --z-card:     10;
+  --z-dropdown: 100;
+  --z-sticky:   200;
+  --z-nav:      300;
+  --z-modal:    400;
+  --z-toast:    500;
+}
+
+/* ── Surcharge mode sombre (préparation future) ────────────────
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-white:   #0F1923;
+    --color-brume:   #1A2535;
+    --color-charbon: #C8D4E0;
+    --color-border:  #2A3A50;
+  }
+}
+────────────────────────────────────────────────────────────── */
