@@ -1,30 +1,63 @@
 /**
  * Emplacement : client/src/components/search/SearchBar.jsx
  *
- * Barre de recherche multi-champs.
- * Deux variantes vues dans les maquettes :
- *  - "hero"     : flottante, grande, sur fond sombre (Homepage)
- *  - "compact"  : fine, intégrée à la nav (ListingPage)
+ * Barre de recherche multi-champs, désormais fonctionnelle.
  *
- * Purement visuel pour l'instant — la logique de recherche
- * sera branchée plus tard via useSearch().
+ * Deux variantes :
+ *  - "hero"    : Homepage. Au clic sur "Rechercher", navigue vers
+ *                /logements?ville=X (la recherche réelle se fait
+ *                sur ListingPage via useListings).
+ *  - "compact" : ListingPage. Appelle onSearch(values) fourni par
+ *                le parent, qui met à jour les filtres en cours
+ *                sans recharger la page.
  *
  * Usage :
  *   <SearchBar variant="hero" />
- *   <SearchBar variant="compact" defaultValues={{ where: 'Paris', ... }} />
+ *   <SearchBar variant="compact" defaultValues={{ where: 'Paris' }} onSearch={(vals) => ...} />
  */
 
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Button from '../ui/Button'
 
-export default function SearchBar({ variant = 'hero', defaultValues = {} }) {
-  const isCompact = variant === 'compact'
+const FIELDS = [
+  { name: 'where',   label: 'Où ?',       placeholder: 'Paris, Lyon, Bordeaux…' },
+  { name: 'checkin', label: 'Arrivée',    placeholder: 'jj / mm / aaaa' },
+  { name: 'checkout',label: 'Départ',     placeholder: 'jj / mm / aaaa' },
+  { name: 'guests',  label: 'Voyageurs',  placeholder: '2 adultes' },
+]
 
-  const fields = [
-    { name: 'where',   label: 'Où ?',       placeholder: 'Paris, Lyon, Bordeaux…' },
-    { name: 'checkin', label: 'Arrivée',    placeholder: 'jj / mm / aaaa' },
-    { name: 'checkout',label: 'Départ',     placeholder: 'jj / mm / aaaa' },
-    { name: 'guests',  label: 'Voyageurs',  placeholder: '2 adultes' },
-  ]
+export default function SearchBar({ variant = 'hero', defaultValues = {}, onSearch }) {
+  const isCompact = variant === 'compact'
+  const navigate = useNavigate()
+
+  const [values, setValues] = useState({
+    where: defaultValues.where || '',
+    checkin: defaultValues.checkin || '',
+    checkout: defaultValues.checkout || '',
+    guests: defaultValues.guests || '',
+  })
+
+  function updateField(name, value) {
+    setValues((prev) => ({ ...prev, [name]: value }))
+  }
+
+  function handleSearch() {
+    if (isCompact) {
+      onSearch?.(values)
+    } else {
+      const params = new URLSearchParams()
+      if (values.where) params.set('ville', values.where)
+      navigate(`/logements${params.toString() ? `?${params}` : ''}`)
+    }
+  }
+
+  function handleKeyDown(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      handleSearch()
+    }
+  }
 
   return (
     <div
@@ -33,7 +66,7 @@ export default function SearchBar({ variant = 'hero', defaultValues = {} }) {
         ${isCompact ? 'shadow-none border border-border' : 'shadow-search'}
       `}
     >
-      {fields.map((field, i) => (
+      {FIELDS.map((field, i) => (
         <div
           key={field.name}
           className={`
@@ -51,7 +84,9 @@ export default function SearchBar({ variant = 'hero', defaultValues = {} }) {
             id={field.name}
             name={field.name}
             type="text"
-            defaultValue={defaultValues[field.name]}
+            value={values[field.name]}
+            onChange={(e) => updateField(field.name, e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder={field.placeholder}
             className="w-full text-sm text-minuit font-medium placeholder:text-gris placeholder:font-normal"
           />
@@ -59,7 +94,13 @@ export default function SearchBar({ variant = 'hero', defaultValues = {} }) {
       ))}
 
       <div className="p-2.5 flex items-center justify-center sm:justify-start">
-        <Button variant="primary" size={isCompact ? 'sm' : 'md'} fullWidth className="sm:w-auto">
+        <Button
+          variant="primary"
+          size={isCompact ? 'sm' : 'md'}
+          fullWidth
+          className="sm:w-auto"
+          onClick={handleSearch}
+        >
           {isCompact ? 'Modifier' : 'Rechercher'}
         </Button>
       </div>

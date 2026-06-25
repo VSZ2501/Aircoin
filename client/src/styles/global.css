@@ -19,6 +19,13 @@
 /* ── Import Tailwind (obligatoire, doit être en premier) ──────── */
 @import "tailwindcss";
 
+/* ── Mode nuit — pilotage manuel via classe .dark sur <html> ──────
+   Par défaut, Tailwind v4 base dark: sur les préférences système
+   (prefers-color-scheme). Cette ligne le remplace par un contrôle
+   manuel : dark:xxx s'applique uniquement quand <html class="dark">,
+   piloté par le bouton toggle dans la Navbar (voir ThemeContext.jsx). */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* ── Import des polices Google Fonts ─────────────────────────── */
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
@@ -77,13 +84,22 @@
     0 8px 32px -4px rgba(0, 0, 0, 0.14);
 }
 
-/* ── Reset moderne (box-sizing + marges) ─────────────────────── */
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+/* ── Reset moderne (box-sizing + marges) ─────────────────────── 
+   ⚠️ FIX CRITIQUE : ce reset doit vivre dans un @layer de priorité
+   plus basse que les utilitaires Tailwind. Sans @layer, une règle
+   CSS "nue" (hors layer) bat TOUJOURS une règle dans un layer,
+   peu importe sa spécificité ou sa position dans le fichier.
+   Résultat sans ce fix : *, *::before, *::after { margin:0; padding:0; }
+   écrasait silencieusement TOUTES les classes p-*, m-*, py-*, gap-*
+   du site entier — c'était la cause du manque d'aération général. */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
 }
 
 /* ── Base HTML ────────────────────────────────────────────────── */
@@ -101,6 +117,7 @@ body {
   line-height: 1.4;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 200ms ease, color 200ms ease;
 }
 
 /* Couleur de texte par défaut — UNIQUEMENT ici, pas sur les titres
@@ -108,6 +125,20 @@ body {
    classe Tailwind text-white posée sur un titre/paragraphe précis. */
 body {
   color: var(--color-charbon);
+}
+
+/* ── Mode nuit : fond et texte par défaut ───────────────────────
+   v1 simple : on inverse le fond/texte de base. Les sections déjà
+   sombres par construction (Hero, Footer, CTA propriétaire) restent
+   identiques car elles utilisent déjà bg-minuit explicitement dans
+   le JSX, qui n'est pas affecté par ces règles génériques. */
+.dark body {
+  background-color: var(--color-minuit);
+  color: var(--color-white);
+}
+
+.dark .section--brume {
+  background-color: #16233D; /* variante un ton plus sombre que minuit, pour distinguer les sections alternées */
 }
 
 /* ── Typographie ──────────────────────────────────────────────── */
@@ -157,49 +188,54 @@ ul, ol {
   list-style: none;
 }
 
-/* ── Formulaires ──────────────────────────────────────────────── */
-input,
-textarea,
-select,
-button {
-  font-family: inherit;
-  font-size: inherit;
-  color: inherit;
-  border: none;
-  background: none;
-  outline: none;
-}
+/* ── Formulaires ──────────────────────────────────────────────── 
+   ⚠️ Même fix que le reset plus haut : tout ce bloc doit être dans
+   @layer base, sinon `display: inline-flex` codé ici bat toujours
+   `md:hidden` (= display:none) généré par Tailwind dans le layer
+   utilities — c'était la cause du bouton hamburger qui ne
+   disparaissait jamais en desktop. */
+@layer base {
+  input,
+  textarea,
+  select,
+  button {
+    font-family: inherit;
+    font-size: inherit;
+    border: none;
+    outline: none;
+  }
 
-/* Pas de width:100% générique ici — la largeur se gère au cas
-   par cas avec la classe Tailwind w-full directement dans le JSX. */
-input,
-textarea,
-select {
-  color: var(--color-minuit);
-  line-height: 1.4;
-}
+  /* Pas de width:100% générique ici — la largeur se gère au cas
+     par cas avec la classe Tailwind w-full directement dans le JSX. */
+  input,
+  textarea,
+  select {
+    color: var(--color-minuit);
+    line-height: 1.4;
+  }
 
-input::placeholder,
-textarea::placeholder {
-  color: var(--color-gris);
-  font-weight: 400;
-}
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-gris);
+    font-weight: 400;
+  }
 
-/* ── Bouton de base ───────────────────────────────────────────── */
-button {
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  line-height: 1.2;
-  transition: all 250ms ease;
-}
+  /* ── Bouton de base ─────────────────────────────────────────── */
+  button {
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    line-height: 1.2;
+    transition: all 250ms ease;
+  }
 
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  pointer-events: none;
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
 }
 
 /* ── Focus accessible ─────────────────────────────────────────── */
@@ -239,7 +275,7 @@ button:disabled {
   width: 100%;
   max-width: 1440px;
   margin-inline: auto;
-  padding-inline: clamp(1.5rem, 5vw, 5rem);
+  padding-inline: clamp(1.5rem, 6vw, 6rem);
 }
 
 .sr-only {
@@ -273,9 +309,17 @@ button:disabled {
   margin-bottom: 0.5rem;
 }
 
+.dark .section__title {
+  color: var(--color-white);
+}
+
 .section__subtitle {
   font-size: 0.9375rem;
   color: var(--color-gris);
+}
+
+.dark .section__subtitle {
+  color: #8AADC5;
 }
 
 /* ── Animations ───────────────────────────────────────────────── */

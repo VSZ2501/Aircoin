@@ -4,9 +4,9 @@
  * Carte logement — le composant le plus réutilisé du site.
  * Présent sur : Homepage ("Logements à la une"), ListingPage (résultats).
  *
- * Proportions calées sur la maquette Penpot d'origine :
- * photo ~210px de haut (pas carrée), padding raisonnable,
- * card compacte mais avec de l'air entre les lignes.
+ * Le bouton favori (vide / plein) est désormais fonctionnel :
+ *  - non connecté → clic redirige vers /connexion
+ *  - connecté → toggle optimiste via useAuth().toggleFavori()
  *
  * Usage :
  *   <ListingCard listing={{
@@ -23,7 +23,9 @@
  *   <ListingCard listing={...} variant="horizontal" />
  */
 
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 import Badge from '../ui/Badge'
 import PriceTag from '../ui/PriceTag'
 import StarRating from '../ui/StarRating'
@@ -42,19 +44,40 @@ export default function ListingCard({ listing, variant = 'vertical' }) {
 
   const isHorizontal = variant === 'horizontal'
 
+  const navigate = useNavigate()
+  const { isAuthenticated, isFavori, toggleFavori } = useAuth()
+  const [pending, setPending] = useState(false)
+
+  const favori = isFavori(id)
+
+  async function handleFavoriClick(e) {
+    e.preventDefault()
+
+    if (!isAuthenticated) {
+      navigate('/connexion')
+      return
+    }
+
+    setPending(true)
+    try {
+      await toggleFavori(id)
+    } catch {
+      // erreur silencieuse, le rollback est déjà géré par AuthContext
+    } finally {
+      setPending(false)
+    }
+  }
+
   return (
     <Link
       to={`/logements/${id}`}
       className={`
-        group flex bg-white rounded-xl overflow-hidden
+        group flex bg-white dark:bg-minuit dark:border dark:border-white/10 rounded-xl overflow-hidden
         shadow-card hover:shadow-card-hover
         transition-all duration-250
         ${isHorizontal ? 'flex-row' : 'flex-col'}
       `}
     >
-      {/* ── Photo ──────────────────────────────────────────── 
-          h-52 (~210px) sur la version verticale, comme la maquette —
-          pas un aspect-square qui rendait la card disproportionnée. */}
       <div
         className={`
           relative bg-[#4A6080] overflow-hidden shrink-0
@@ -70,34 +93,31 @@ export default function ListingCard({ listing, variant = 'vertical' }) {
 
         <button
           type="button"
-          aria-label="Ajouter aux favoris"
-          onClick={(e) => e.preventDefault()}
+          aria-label={favori ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+          onClick={handleFavoriClick}
+          disabled={pending}
           className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 flex items-center justify-center text-terrecuite hover:bg-white transition-colors duration-150"
         >
-          ♡
+          {favori ? '♥' : '♡'}
         </button>
       </div>
 
-      {/* ── Contenu ────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col p-5 min-w-0">
-        <h3 className="text-md font-bold text-minuit leading-snug line-clamp-2 mb-2">
+        <h3 className="text-md font-bold text-minuit dark:text-white leading-snug line-clamp-2 mb-2">
           {title}
         </h3>
 
-        <p className="text-sm text-gris mb-2">
+        <p className="text-sm text-gris dark:text-[#8AADC5] mb-2">
           📍 {location}
         </p>
 
         <StarRating note={note} reviewCount={reviewCount} size="sm" />
 
-        {/* Espace flexible : pousse le prix en bas, garde toutes
-            les cards d'une rangée alignées même si le titre fait
-            1 ou 2 lignes. */}
         <div className="flex-1 min-h-4" />
 
         <div className="pt-4 mt-2 border-t border-border flex items-center justify-between gap-3">
           <PriceTag amount={price} />
-          <span className="text-sm font-semibold text-minuit group-hover:text-terrecuite transition-colors duration-150 whitespace-nowrap">
+          <span className="text-sm font-semibold text-minuit dark:text-white group-hover:text-terrecuite transition-colors duration-150 whitespace-nowrap">
             Voir l'offre →
           </span>
         </div>
