@@ -24,7 +24,7 @@ const reservationSchema = new mongoose.Schema(
     // ── Statut ───────────────────────────────────────────────────────────────────
     statut: {
       type: String,
-      enum: ['en_attente', 'confirmee', 'annulee'],
+      enum: ['en_attente', 'confirmee', 'refusee', 'annulee'],
       default: 'en_attente',
     },
 

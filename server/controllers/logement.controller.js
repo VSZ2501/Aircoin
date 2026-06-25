@@ -2,17 +2,14 @@
 // Toutes les réponses passent par formatListing() qui traduit les noms de champs
 // FR (BDD) → EN (front React) pour coller à ce qu'attendent les composants.
 
-const Logement    = require('../models/logement.model');
+const Logement     = require('../models/logement.model');
 const AvisLogement = require('../models/avisLogement.model');
+const { geocoderAdresse } = require('../utils/geocode');
 
 // ══ Mappers ════════════════════════════════════════════════════════════════════
 
-/**
- * Formate un document Utilisateur (hôte) pour le front.
- * Correspond à l'objet HOST utilisé dans HostCard / DetailPage.
- */
 function formatHost(u, listingsCount = 0) {
-  if (!u || typeof u !== 'object') return u;  // non peuplé → on renvoie l'ObjectId brut
+  if (!u || typeof u !== 'object') return u;
   return {
     id:           u._id,
     name:        `${u.prenom} ${u.nom}`,
@@ -29,14 +26,13 @@ function formatHost(u, listingsCount = 0) {
 }
 
 /**
- * Formate un document Logement pour le front.
- * Correspond aux objets LISTINGS utilisés dans ListingGrid / DetailPage / BookingCard.
+ * Exportée (voir module.exports en bas) car réutilisée par
+ * utilisateur.controller.js -> getFavoris(), pour que les logements
+ * favoris soient renvoyés dans le même format que partout ailleurs.
  */
 function formatListing(doc, listingsCount = 0) {
   const l = doc.toObject ? doc.toObject() : doc;
 
-  // Construit la chaîne "location" affichée sous le titre dans les cards :
-  // ex. "Paris 10e · 68 m²"  ou  "Paris · 68 m²"  ou  "Paris"
   const locationParts = [];
   if (l.quartier) locationParts.push(l.quartier);
   else if (l.ville) locationParts.push(l.ville);
@@ -47,10 +43,13 @@ function formatListing(doc, listingsCount = 0) {
     id:          l._id,
     title:       l.nom_logement,
     type:        l.type_de_logement,
-    location,                              // "Paris 10e · 68 m²"
+    location,
     city:        l.ville,
     district:    l.quartier,
     address:     l.adresse,
+    postalCode:  l.code_postal,
+    latitude:    l.latitude,
+    longitude:   l.longitude,
     surface:     l.surface,
     price:       l.prix,
     maxGuests:   l.capacite,
@@ -75,7 +74,7 @@ function formatListing(doc, listingsCount = 0) {
 
 /**
  * GET /api/logements
- * Filtres : ville, type, prixMin, prixMax, meuble, animaux, chambres
+ * Filtres : ville, type, prixMin, prixMax, meuble, animaux, chambres, hebergeurId
  * Pagination : page (défaut 1), limit (défaut 12)
  * Tri : sort = prix_asc | prix_desc | note | recent
  */
@@ -84,25 +83,25 @@ const getLogements = async (req, res, next) => {
     const {
       ville, type, prixMin, prixMax,
       meuble, animaux, chambres,
+      hebergeurId,
       page  = 1,
       limit = 12,
       sort  = 'prix_asc',
     } = req.query;
 
-    // ── Construction du filtre ─────────────────────────────────────────────────
     const filtre = {};
-    if (ville)    filtre.ville             = { $regex: ville, $options: 'i' };
-    if (type)     filtre.type_de_logement  = type;
-    if (meuble  === 'true') filtre.meuble  = true;
-    if (animaux === 'true') filtre.animaux = true;
-    if (chambres) filtre.chambres          = { $gte: Number(chambres) };
+    if (ville)       filtre.ville             = { $regex: ville, $options: 'i' };
+    if (type)         filtre.type_de_logement  = type;
+    if (meuble  === 'true') filtre.meuble      = true;
+    if (animaux === 'true') filtre.animaux     = true;
+    if (chambres)     filtre.chambres          = { $gte: Number(chambres) };
+    if (hebergeurId)  filtre.hebergeur_id       = hebergeurId;
     if (prixMin || prixMax) {
       filtre.prix = {};
       if (prixMin) filtre.prix.$gte = Number(prixMin);
       if (prixMax) filtre.prix.$lte = Number(prixMax);
     }
 
-    // ── Tri ───────────────────────────────────────────────────────────────────
     const triMap = {
       prix_asc:  { prix: 1 },
       prix_desc: { prix: -1 },
@@ -111,7 +110,6 @@ const getLogements = async (req, res, next) => {
     };
     const triOption = triMap[sort] || { prix: 1 };
 
-    // ── Pagination ────────────────────────────────────────────────────────────
     const skip  = (Number(page) - 1) * Number(limit);
     const total = await Logement.countDocuments(filtre);
 
@@ -135,7 +133,6 @@ const getLogements = async (req, res, next) => {
 
 /**
  * GET /api/logements/featured
- * 4 logements avec badge, triés par note — utilisés dans la HomePage.
  */
 const getLogementsALaUne = async (req, res, next) => {
   try {
@@ -152,7 +149,6 @@ const getLogementsALaUne = async (req, res, next) => {
 
 /**
  * GET /api/logements/villes
- * Agrégation → { name, count } pour les cartes "Destinations populaires" de la HomePage.
  */
 const getVilles = async (req, res, next) => {
   try {
@@ -171,7 +167,6 @@ const getVilles = async (req, res, next) => {
 
 /**
  * GET /api/logements/:id
- * Détail complet avec hôte peuplé + nb de logements de cet hôte.
  */
 const getLogementById = async (req, res, next) => {
   try {
@@ -182,7 +177,6 @@ const getLogementById = async (req, res, next) => {
       return res.status(404).json({ succes: false, message: 'Logement introuvable' });
     }
 
-    // Nombre de logements de cet hôte (affiché dans HostCard → listingsCount)
     const listingsCount = await Logement.countDocuments({
       hebergeur_id: logement.hebergeur_id?._id ?? logement.hebergeur_id,
     });
@@ -196,11 +190,21 @@ const getLogementById = async (req, res, next) => {
 /**
  * POST /api/logements
  * Création — réservé aux hébergeurs connectés.
+ * Géocode automatiquement l'adresse en coordonnées GPS (latitude/longitude)
+ * avant la sauvegarde — l'hôte n'a jamais à les saisir manuellement.
  */
 const creerLogement = async (req, res, next) => {
   try {
+    const { latitude, longitude } = await geocoderAdresse(
+      req.body.adresse,
+      req.body.code_postal,
+      req.body.ville
+    );
+
     const logement = await Logement.create({
       ...req.body,
+      latitude,
+      longitude,
       hebergeur_id: req.utilisateur._id,
     });
 
@@ -213,6 +217,8 @@ const creerLogement = async (req, res, next) => {
 /**
  * PUT /api/logements/:id
  * Modification — réservé au propriétaire du logement.
+ * Re-géocode uniquement si l'adresse, le code postal ou la ville
+ * changent (sinon les coordonnées existantes restent valides).
  */
 const modifierLogement = async (req, res, next) => {
   try {
@@ -225,10 +231,25 @@ const modifierLogement = async (req, res, next) => {
       return res.status(403).json({ succes: false, message: 'Non autorisé' });
     }
 
-    const updated = await Logement.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    }).populate('hebergeur_id', 'nom prenom photo_de_profil avis superhost');
+    const adresseAChange =
+      (req.body.adresse     && req.body.adresse     !== logement.adresse) ||
+      (req.body.code_postal && req.body.code_postal !== logement.code_postal) ||
+      (req.body.ville       && req.body.ville       !== logement.ville);
+
+    let coords = {};
+    if (adresseAChange) {
+      coords = await geocoderAdresse(
+        req.body.adresse     || logement.adresse,
+        req.body.code_postal || logement.code_postal,
+        req.body.ville       || logement.ville
+      );
+    }
+
+    const updated = await Logement.findByIdAndUpdate(
+      req.params.id,
+      { ...req.body, ...coords },
+      { new: true, runValidators: true }
+    ).populate('hebergeur_id', 'nom prenom photo_de_profil avis superhost');
 
     res.json({ succes: true, data: formatListing(updated) });
   } catch (err) {
@@ -238,7 +259,6 @@ const modifierLogement = async (req, res, next) => {
 
 /**
  * DELETE /api/logements/:id
- * Suppression — réservé au propriétaire du logement.
  */
 const supprimerLogement = async (req, res, next) => {
   try {
@@ -252,8 +272,6 @@ const supprimerLogement = async (req, res, next) => {
     }
 
     await logement.deleteOne();
-
-    // Nettoyage des avis associés
     await AvisLogement.deleteMany({ logement_id: req.params.id });
 
     res.json({ succes: true, message: 'Logement supprimé avec succès' });
@@ -270,4 +288,5 @@ module.exports = {
   creerLogement,
   modifierLogement,
   supprimerLogement,
+  formatListing,
 };

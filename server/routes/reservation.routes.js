@@ -6,15 +6,23 @@ const {
   creerReservation,
   getMesReservations,
   annulerReservation,
+  accepterReservation,
+  refuserReservation,
+  getReservationsRecues,
+  peutNoterReservation,
 } = require('../controllers/reservation.controller');
 
-const { proteger, roleRequis } = require('../middlewares/authMiddleware');
+const { proteger } = require('../middlewares/authMiddleware');
 
-// Toutes les routes de réservation nécessitent d'être connecté
 router.use(proteger);
 
-router.post('/',                        roleRequis('client'), creerReservation);      // POST /api/reservations
-router.get('/mes-reservations',         roleRequis('client'), getMesReservations);    // GET  /api/reservations/mes-reservations
-router.put('/:id/annuler',              roleRequis('client'), annulerReservation);    // PUT  /api/reservations/:id/annuler
+router.post('/',                  creerReservation);
+router.get('/mes-reservations',   getMesReservations);
+router.get('/recues',             getReservationsRecues);
+router.put('/:id/annuler',        annulerReservation);
+router.put('/:id/accepter',       accepterReservation);
+router.put('/:id/refuser',        refuserReservation);
+router.get('/:id/peut-noter', peutNoterReservation);
+
 
 module.exports = router;

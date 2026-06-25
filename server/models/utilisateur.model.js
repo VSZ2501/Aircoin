@@ -1,6 +1,6 @@
 // ─── MODÈLE Utilisateur ───────────────────────────────────────────────────────
 // Collection : "utilisateurs"
-// Champs ajoutés pour coller au front : bio, superhost, taux_reponse, date_inscription
+// Champs ajoutés pour coller au front : bio, superhost, taux_reponse, date_inscription, favoris
 
 const mongoose = require('mongoose');
 const bcrypt   = require('bcryptjs');
@@ -19,6 +19,9 @@ const utilisateurSchema = new mongoose.Schema(
 
     // ── Rôle ────────────────────────────────────────────────────────────────────
     role: { type: String, enum: ['client', 'hebergeur'], required: true },
+
+    // ── Favoris (logements likés par l'utilisateur) ──────────────────────────────
+    favoris: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Logement', default: [] }],
 
     // ── Profil hôte (affiché sur DetailPage → HostCard) ─────────────────────────
     bio:             { type: String, default: '', trim: true },

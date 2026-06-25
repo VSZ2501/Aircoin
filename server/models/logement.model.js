@@ -1,7 +1,8 @@
 // ─── MODÈLE Logement ──────────────────────────────────────────────────────────
 // Collection : "logements"
 // Champs ajoutés pour coller au front : ville, quartier, description, badge,
-// chambres, salles_de_bain, etage, meuble, animaux, avgNote, reviewCount
+// chambres, salles_de_bain, etage, meuble, animaux, avgNote, reviewCount,
+// code_postal, latitude, longitude
 
 const mongoose = require('mongoose');
 
@@ -25,9 +26,16 @@ const logementSchema = new mongoose.Schema(
     description:      { type: String, default: '', trim: true },
 
     // ── Localisation ────────────────────────────────────────────────────────────
-    adresse:  { type: String, required: [true, "L'adresse est requise"], trim: true },
-    ville:    { type: String, required: [true, 'La ville est requise'],  trim: true, index: true },
-    quartier: { type: String, default: '', trim: true },      // "Paris 10e", "Croix-Rousse"
+    adresse:     { type: String, required: [true, "L'adresse est requise"], trim: true },
+    ville:       { type: String, required: [true, 'La ville est requise'],  trim: true, index: true },
+    code_postal: { type: String, required: true, trim: true },
+    quartier:    { type: String, default: '', trim: true },      // "Paris 10e", "Croix-Rousse"
+
+    // Coordonnées GPS — calculées automatiquement par géocodage de
+    // l'adresse côté serveur (voir utils/geocode.js + logement.controller.js
+    // → creerLogement/modifierLogement). L'hôte n'a jamais à les saisir.
+    latitude:  { type: Number },
+    longitude: { type: Number },
 
     // ── Caractéristiques ────────────────────────────────────────────────────────
     surface:        { type: Number, min: 1 },

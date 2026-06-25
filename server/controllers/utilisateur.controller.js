@@ -1,8 +1,13 @@
 // ─── CONTROLLER Utilisateur ───────────────────────────────────────────────────
-// Gère l'authentification JWT et le profil utilisateur.
+// Gère l'authentification JWT, le profil utilisateur et les favoris.
 
 const jwt          = require('jsonwebtoken');
 const Utilisateur  = require('../models/utilisateur.model');
+
+// formatListing est réutilisé pour que getFavoris() renvoie les logements
+// dans le même format que partout ailleurs sur le front (title, price,
+// location...), au lieu des champs bruts en français de la base.
+const { formatListing } = require('./logement.controller');
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -26,6 +31,7 @@ function formatUser(u) {
     since:        u.date_inscription
                     ? new Date(u.date_inscription).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
                     : '',
+    favoris:      (u.favoris || []).map(id => id.toString ? id.toString() : id),
   };
 }
 
@@ -72,7 +78,6 @@ const connecter = async (req, res, next) => {
       return res.status(400).json({ succes: false, message: 'Login et mot de passe requis' });
     }
 
-    // select('+mot_de_passe') car le champ est select:false dans le schéma
     const utilisateur = await Utilisateur.findOne({ login }).select('+mot_de_passe');
 
     if (!utilisateur || !(await utilisateur.verifierMotDePasse(mot_de_passe))) {
@@ -97,4 +102,81 @@ const moi = async (req, res) => {
   res.json({ succes: true, data: formatUser(req.utilisateur) });
 };
 
-module.exports = { inscrire, connecter, moi };
+/**
+ * PUT /api/utilisateurs/moi
+ * Permet à un client connecté de devenir hébergeur.
+ * Body : { role: 'hebergeur' }
+ */
+const devenirHebergeur = async (req, res, next) => {
+  try {
+    if (req.body.role !== 'hebergeur') {
+      return res.status(400).json({ succes: false, message: 'Rôle invalide' });
+    }
+    if (req.utilisateur.role === 'hebergeur') {
+      return res.status(400).json({ succes: false, message: 'Vous êtes déjà hébergeur' });
+    }
+
+    req.utilisateur.role = 'hebergeur';
+    await req.utilisateur.save();
+
+    res.json({ succes: true, data: formatUser(req.utilisateur) });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * PUT /api/utilisateurs/favoris/:logementId
+ * Ajoute ou retire un logement des favoris de l'utilisateur connecté (toggle).
+ */
+const toggleFavori = async (req, res, next) => {
+  try {
+    const { logementId } = req.params;
+    const index = req.utilisateur.favoris.findIndex(
+      (id) => id.toString() === logementId
+    );
+
+    if (index === -1) {
+      req.utilisateur.favoris.push(logementId);
+    } else {
+      req.utilisateur.favoris.splice(index, 1);
+    }
+    await req.utilisateur.save();
+
+    res.json({
+      succes: true,
+      data: req.utilisateur.favoris.map((id) => id.toString()),
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * GET /api/utilisateurs/favoris
+ * Liste des logements favoris de l'utilisateur connecté, formatés
+ * exactement comme les logements partout ailleurs sur le front
+ * (title, price, location...) via formatListing().
+ */
+const getFavoris = async (req, res, next) => {
+  try {
+    const utilisateur = await req.utilisateur.populate('favoris');
+
+    res.json({
+      succes: true,
+      count: utilisateur.favoris.length,
+      data: utilisateur.favoris.map((logement) => formatListing(logement)),
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = {
+  inscrire,
+  connecter,
+  moi,
+  devenirHebergeur,
+  toggleFavori,
+  getFavoris,
+};

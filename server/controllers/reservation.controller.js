@@ -20,12 +20,16 @@ function formatReservation(r) {
   return {
     id:          doc._id,
     logement:    doc.logement_id,
+    hostId:      doc.logement_id?.hebergeur_id?.toString
+                   ? doc.logement_id.hebergeur_id.toString()
+                   : doc.logement_id?.hebergeur_id,
     checkIn:     doc.date_arrivee
                    ? new Date(doc.date_arrivee).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
                    : '',
     checkOut:    doc.date_depart
                    ? new Date(doc.date_depart).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
                    : '',
+    checkOutISO: doc.date_depart || null,   // <- AJOUT — format brut exploitable côté front
     guests:      doc.nb_voyageurs,
     nbNuits,
     priceRows,
@@ -128,7 +132,7 @@ const creerReservation = async (req, res, next) => {
 const getMesReservations = async (req, res, next) => {
   try {
     const reservations = await Reservation.find({ client_id: req.utilisateur._id })
-      .populate('logement_id', 'nom_logement adresse ville prix photos badge')
+      .populate('logement_id', 'nom_logement adresse ville prix photos badge hebergeur_id')
       .sort({ date_creation: -1 });
 
     res.json({ succes: true, count: reservations.length, data: reservations.map(formatReservation) });
@@ -154,6 +158,9 @@ const annulerReservation = async (req, res, next) => {
     if (reservation.statut === 'annulee') {
       return res.status(400).json({ succes: false, message: 'Réservation déjà annulée' });
     }
+    if (reservation.date_depart < new Date()) {
+      return res.status(400).json({ succes: false, message: 'Impossible d\'annuler un séjour déjà terminé' });
+    }
 
     reservation.statut = 'annulee';
     await reservation.save();
@@ -164,4 +171,118 @@ const annulerReservation = async (req, res, next) => {
   }
 };
 
-module.exports = { creerReservation, getMesReservations, annulerReservation };
+/**
+ * PUT /api/reservations/:id/accepter
+ * L'hôte (propriétaire du logement) accepte la réservation.
+ */
+const accepterReservation = async (req, res, next) => {
+  try {
+    const reservation = await Reservation.findById(req.params.id).populate('logement_id', 'hebergeur_id');
+
+    if (!reservation) {
+      return res.status(404).json({ succes: false, message: 'Réservation introuvable' });
+    }
+    if (reservation.logement_id.hebergeur_id.toString() !== req.utilisateur._id.toString()) {
+      return res.status(403).json({ succes: false, message: 'Non autorisé' });
+    }
+    if (reservation.statut !== 'en_attente') {
+      return res.status(400).json({ succes: false, message: 'Cette réservation a déjà été traitée' });
+    }
+
+    reservation.statut = 'confirmee';
+    await reservation.save();
+
+    res.json({ succes: true, data: formatReservation(reservation) });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * PUT /api/reservations/:id/refuser
+ * L'hôte (propriétaire du logement) refuse la réservation.
+ */
+const refuserReservation = async (req, res, next) => {
+  try {
+    const reservation = await Reservation.findById(req.params.id).populate('logement_id', 'hebergeur_id');
+
+    if (!reservation) {
+      return res.status(404).json({ succes: false, message: 'Réservation introuvable' });
+    }
+    if (reservation.logement_id.hebergeur_id.toString() !== req.utilisateur._id.toString()) {
+      return res.status(403).json({ succes: false, message: 'Non autorisé' });
+    }
+    if (reservation.statut !== 'en_attente') {
+      return res.status(400).json({ succes: false, message: 'Cette réservation a déjà été traitée' });
+    }
+
+    reservation.statut = 'refusee';
+    await reservation.save();
+
+    res.json({ succes: true, data: formatReservation(reservation) });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * GET /api/reservations/recues
+ * Toutes les réservations reçues sur les logements de l'hôte connecté
+ * (pour afficher la liste à accepter/refuser sur son Dashboard).
+ */
+const getReservationsRecues = async (req, res, next) => {
+  try {
+    const Logement = require('../models/logement.model');
+    const mesLogements = await Logement.find({ hebergeur_id: req.utilisateur._id }).select('_id');
+    const logementIds = mesLogements.map(l => l._id);
+
+    const reservations = await Reservation.find({ logement_id: { $in: logementIds } })
+      .populate('logement_id', 'nom_logement adresse ville prix photos')
+      .sort({ date_creation: -1 });
+
+    res.json({ succes: true, count: reservations.length, data: reservations.map(formatReservation) });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * GET /api/reservations/:id/peut-noter
+ * Vérifie si l'utilisateur connecté peut laisser un avis pour cette
+ * réservation : statut confirmée + date de départ déjà passée +
+ * pas déjà noté.
+ */
+const peutNoterReservation = async (req, res, next) => {
+  try {
+    const AvisUtilisateur = require('../models/avisUtilisateur.model');
+    const reservation = await Reservation.findById(req.params.id);
+
+    if (!reservation) {
+      return res.status(404).json({ succes: false, message: 'Réservation introuvable' });
+    }
+
+    const sejourTermine = reservation.statut === 'confirmee' && reservation.date_depart < new Date();
+
+    const dejaNote = await AvisUtilisateur.findOne({
+      reservation_id: req.params.id,
+      auteur_id: req.utilisateur._id,
+    });
+
+    res.json({
+      succes: true,
+      data: { peutNoter: sejourTermine && !dejaNote, dejaNote: !!dejaNote },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = {
+  creerReservation,
+  getMesReservations,
+  annulerReservation,
+  accepterReservation,
+  refuserReservation,
+  getReservationsRecues,
+  peutNoterReservation,
+};

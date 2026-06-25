@@ -2,13 +2,24 @@
 const express = require('express');
 const router  = express.Router();
 
-const { getAvisLogement, creerAvis } = require('../controllers/avis.controller');
-const { proteger, roleRequis }       = require('../middlewares/authMiddleware');
+const {
+  getAvisLogement,
+  creerAvis,
+  peutNoterLogement,
+  creerAvisUtilisateur,
+  getAvisUtilisateur,
+} = require('../controllers/avis.controller');
 
-// GET  /api/avis/logement/:id  → liste des avis (public)
-router.get('/logement/:id', getAvisLogement);
+const { proteger } = require('../middlewares/authMiddleware');
 
-// POST /api/avis/logement/:id  → créer un avis (client connecté)
-router.post('/logement/:id', proteger, roleRequis('client'), creerAvis);
+// ── Avis sur les LOGEMENTS ──────────────────────────────────────────────────
+router.get('/logement/:id', getAvisLogement);                  // public
+router.post('/logement/:id', proteger, creerAvis);              // connecté (tout rôle)
+router.get('/logement/:id/peut-noter', proteger, peutNoterLogement);
+
+
+// ── Avis sur les UTILISATEURS (hôte ↔ client, réciproque) ───────────────────
+router.post('/utilisateur/:reservationId', proteger, creerAvisUtilisateur);
+router.get('/utilisateur/:userId', getAvisUtilisateur);         // public
 
 module.exports = router;
