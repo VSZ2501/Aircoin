@@ -48,3 +48,42 @@ export const getAvisLogement = (logementId) =>
  */
 export const creerAvis = (logementId, body) =>
   api.post(`/avis/logement/${logementId}`, body).then(r => r.data);
+
+// ── Hébergeur (Dashboard) ───────────────────────────────────────────────────
+
+/**
+ * Logements d'un hébergeur précis — utilisé par DashboardPage (vue hôte).
+ * ⚠️ Nécessite un filtre hebergeurId côté serveur dans logement.controller.js
+ * (getLogements) : if (hebergeurId) filtre.hebergeur_id = hebergeurId;
+ * @param {string} hebergeurId
+ */
+export const getMesLogements = (hebergeurId) =>
+  api.get('/logements', { params: { hebergeurId, limit: 100 } }).then(r => r.data);
+
+/**
+ * Crée un nouveau logement (hébergeur connecté requis).
+ * Body attendu (champs du modèle Logement, en français) :
+ *   nom_logement, type_de_logement, description, adresse, ville,
+ *   code_postal, quartier, surface, capacite, chambres,
+ *   salles_de_bain, etage, prix, equipement[], regle, meuble, animaux
+ */
+export const creerLogement = (body) =>
+  api.post('/logements', body).then(r => r.data);
+
+/**
+ * Modifie un logement existant (propriétaire hébergeur uniquement).
+ * @param {string} id
+ * @param {Object} body - mêmes champs que creerLogement, partiels acceptés
+ */
+export const modifierLogement = (id, body) =>
+  api.put(`/logements/${id}`, body).then(r => r.data);
+ 
+/**
+ * Supprime un logement (propriétaire hébergeur uniquement).
+ * @param {string} id
+ */
+export const supprimerLogement = (id) =>
+  api.delete(`/logements/${id}`).then(r => r.data);
+
+export const peutNoterLogement = (logementId) =>
+  api.get(`/avis/logement/${logementId}/peut-noter`).then(r => r.data);

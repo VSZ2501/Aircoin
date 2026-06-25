@@ -34,7 +34,7 @@ export default function PriceTag({
         {amount} {unit}
       </span>
       {suffix && (
-        <span className={`text-gris font-normal ${sizeClasses.suffix}`}>
+        <span className={`text-gris dark:text-[#8AADC5] font-normal ${sizeClasses.suffix}`}>
           {suffix}
         </span>
       )}

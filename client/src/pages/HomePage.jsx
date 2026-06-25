@@ -44,18 +44,28 @@ export default function HomePage() {
     <>
       {/* ════════════════════ HERO ════════════════════ */}
       <section className="bg-minuit overflow-hidden">
-        <div className="container relative pt-20 pb-40 lg:pt-28 lg:pb-44">
-          <div aria-hidden="true" className="hidden lg:block absolute top-0 right-0 bottom-0 w-1/2 bg-[#3A5878]/30" />
-          <p className="relative text-xs font-semibold text-terrecuite uppercase tracking-wider mb-4">
+        <div className="container relative pt-24 pb-44 lg:pt-32 lg:pb-52">
+
+          {/* Décor silhouette : z-index négatif explicite pour ne
+              jamais passer au-dessus de la search bar qui suit
+              (bug corrigé : le décor recouvrait invisiblement les
+              champs Arrivée, Départ et Voyageurs, les rendant
+              cliquables en apparence mais inertes en réalité). */}
+          <div
+            aria-hidden="true"
+            className="hidden lg:block absolute top-0 right-0 bottom-0 w-1/2 bg-[#3A5878]/30 -z-10"
+          />
+
+          <p className="relative text-xs font-semibold text-terrecuite uppercase tracking-wider mb-5">
             Location · Particuliers & professionnels
           </p>
-          <h1 className="relative text-white max-w-xl mb-6">
+          <h1 className="relative text-white max-w-xl mb-7">
             Trouvez le logement qui vous ressemble.
           </h1>
-          <p className="relative text-[#93AECA] text-lg max-w-md mb-10 leading-relaxed">
+          <p className="relative text-[#93AECA] text-lg max-w-md mb-12 leading-relaxed">
             Appartements, maisons, studios — partout en France.
           </p>
-          <div className="relative flex flex-wrap gap-8 text-sm text-[#8AADC5]">
+          <div className="relative flex flex-wrap gap-10 text-sm text-[#8AADC5]">
             <span>🏠 +48 000 annonces</span>
             <span>⭐ Note 4.8/5</span>
             <span>🔒 Sécurisé</span>
@@ -63,8 +73,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ════════════════════ SEARCH BAR ════════════════════ */}
-      <div className="container -mt-20 mb-16">
+      {/* ════════════════════ SEARCH BAR ════════════════════
+          z-index explicite (relative + z-10) pour garantir qu'elle
+          reste toujours cliquable, peu importe l'empilement créé
+          par le hero (overflow-hidden) juste au-dessus. */}
+      <div className="container relative z-10 -mt-24 mb-24">
         <SearchBar variant="hero" />
       </div>
 
@@ -77,13 +90,13 @@ export default function HomePage() {
           </div>
 
           {loading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5">
               {[...Array(5)].map((_, i) => (
                 <div key={i} className="aspect-[4/5] rounded-lg bg-[#E8EDF2] animate-pulse" />
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5">
               {villes.map((city, i) => (
                 <Link
                   key={city.name}
@@ -91,10 +104,10 @@ export default function HomePage() {
                   className="relative aspect-[4/5] rounded-lg overflow-hidden block"
                   style={{ backgroundColor: CITY_COLORS[i % CITY_COLORS.length] }}
                 >
-                  <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/80 to-transparent" />
-                  <div className="absolute bottom-4 left-4 right-4">
+                  <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/80 to-transparent" />
+                  <div className="absolute bottom-5 left-5 right-5">
                     <p className="text-white font-bold leading-tight">{city.name}</p>
-                    <p className="text-[#D0D8E0] text-xs mt-0.5">{city.count} annonce{city.count > 1 ? 's' : ''}</p>
+                    <p className="text-[#D0D8E0] text-xs mt-1">{city.count} annonce{city.count > 1 ? 's' : ''}</p>
                   </div>
                 </Link>
               ))}
@@ -137,15 +150,15 @@ export default function HomePage() {
             <h2 className="section__title">Comment ça marche ?</h2>
             <p className="section__subtitle">Simple, rapide, sécurisé — en trois étapes.</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-10">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-14">
             {STEPS.map((step) => (
               <div key={step.num}>
-                <div className="w-14 h-14 rounded-full bg-terrecuite/10 flex items-center justify-center text-2xl mb-4">
+                <div className="w-16 h-16 rounded-full bg-terrecuite/10 flex items-center justify-center text-2xl mb-6">
                   {step.icon}
                 </div>
-                <p className="text-xs font-bold text-terrecuite mb-1">{step.num}</p>
-                <h3 className="text-lg font-bold text-minuit mb-2">{step.title}</h3>
-                <p className="text-sm text-charbon leading-relaxed">{step.desc}</p>
+                <p className="text-xs font-bold text-terrecuite mb-2">{step.num}</p>
+                <h3 className="text-lg font-bold text-minuit dark:text-white mb-3">{step.title}</h3>
+                <p className="text-sm text-charbon dark:text-[#B8C5D6] leading-relaxed">{step.desc}</p>
               </div>
             ))}
           </div>
@@ -158,17 +171,17 @@ export default function HomePage() {
           <div className="section__header">
             <h2 className="section__title">Ce que disent nos utilisateurs</h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-7">
             {TESTIMONIALS.map((t) => (
-              <div key={t.name} className="bg-white rounded-lg shadow-card p-6">
-                <p className="text-terrecuite text-2xl mb-3 leading-none">❝</p>
-                <p className="text-sm text-charbon leading-relaxed mb-5">{t.text}</p>
-                <p className="text-star text-sm mb-5">★★★★★ <span className="text-gris ml-1">{t.note}</span></p>
+              <div key={t.name} className="bg-white dark:bg-minuit dark:border dark:border-white/10 rounded-lg shadow-card p-8">
+                <p className="text-terrecuite text-2xl mb-4 leading-none">❝</p>
+                <p className="text-sm text-charbon dark:text-[#B8C5D6] leading-relaxed mb-6">{t.text}</p>
+                <p className="text-star text-sm mb-6">★★★★★ <span className="text-gris dark:text-[#8AADC5] ml-1">{t.note}</span></p>
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full shrink-0" style={{ backgroundColor: t.color }} />
+                  <div className="w-10 h-10 rounded-full shrink-0" style={{ backgroundColor: t.color }} />
                   <div>
-                    <p className="text-sm font-bold text-minuit leading-tight">{t.name}</p>
-                    <p className="text-xs text-gris mt-0.5">{t.city}</p>
+                    <p className="text-sm font-bold text-minuit dark:text-white leading-tight">{t.name}</p>
+                    <p className="text-xs text-gris dark:text-[#8AADC5] mt-1">{t.city}</p>
                   </div>
                 </div>
               </div>
@@ -179,21 +192,23 @@ export default function HomePage() {
 
       {/* ════════════════════ CTA PROPRIÉTAIRE ════════════════════ */}
       <section className="bg-minuit">
-        <div className="container py-20 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-12 border-l-4 border-terrecuite pl-8">
+        <div className="container py-24 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-14 border-l-4 border-terrecuite pl-10">
           <div className="max-w-lg">
-            <p className="text-xs font-bold text-terrecuite uppercase tracking-wide mb-3">Vous êtes propriétaire ?</p>
-            <h2 className="text-white text-3xl leading-tight mb-4">
+            <p className="text-xs font-bold text-terrecuite uppercase tracking-wide mb-4">Vous êtes propriétaire ?</p>
+            <h2 className="text-white text-3xl leading-tight mb-5">
               Mettez votre logement en location et générez des revenus complémentaires.
             </h2>
             <p className="text-[#8AADC5]">Publication gratuite, accompagnement personnalisé, paiements sécurisés.</p>
           </div>
-          <div className="flex flex-col gap-8 shrink-0">
-            <Button variant="primary" size="lg">Publier une annonce →</Button>
-            <div className="flex gap-8">
+          <div className="flex flex-col gap-10 shrink-0">
+            <Link to="/publier">
+              <Button variant="primary" size="lg">Publier une annonce →</Button>
+            </Link>
+            <div className="flex gap-10">
               {[['12 h', 'Délai de publication'], ['0 %', 'Commission à la mise en ligne'], ['98 %', 'Propriétaires satisfaits']].map(([val, lbl]) => (
                 <div key={lbl}>
                   <p className="text-white text-2xl font-bold">{val}</p>
-                  <p className="text-[#6A8BAA] text-xs max-w-[110px] mt-1 leading-snug">{lbl}</p>
+                  <p className="text-[#6A8BAA] text-xs max-w-[110px] mt-1.5 leading-snug">{lbl}</p>
                 </div>
               ))}
             </div>

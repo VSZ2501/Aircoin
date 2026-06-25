@@ -43,7 +43,7 @@ export default function StarRating({
     <span className={`inline-flex items-center gap-1 ${sizeClass} ${className}`}>
       <span className="text-star font-bold">★ {note.toFixed(1)}</span>
       {reviewCount !== undefined && (
-        <span className="text-gris font-normal">
+        <span className="text-gris dark:text-[#8AADC5] font-normal">
           ({reviewCount} avis)
         </span>
       )}
